@@ -7,6 +7,10 @@ const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 
+//import express-session
+const session = require('express-session');
+const FileStore = require('session-file-store')(session);
+
 const index = require('./routes/index');
 const users = require('./routes/users');
 const dishRouter = require('./routes/dishRouter');
@@ -40,14 +44,23 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser('12345-67890-09876-54321'));
+//app.use(cookieParser('12345-67890-09876-54321'));
+
+//use session
+app.use(session({
+    name: 'session-id',
+    secret: '12345-67890-09876-54321',
+    saveUninitialized: false,
+    resave: false,
+    store: new FileStore()
+}));
 
 //basic authentication
 let auth = (req, res, next) => {
-    console.log(req.signedCookies);
+    console.log(req.session);
 
     //if user is not authorized
-    if(!req.signedCookies.user){
+    if(!req.session.user){
         let authHeader = req.headers.authorization;
         if(!authHeader){
             let err = new Error(`You are not authenticated!`);
@@ -63,7 +76,8 @@ let auth = (req, res, next) => {
 
         if(username === 'admin' && password === 'password'){
             //user=> name, admin ==> value as a result client will have cookie on it's side
-            res.cookie('user', 'admin', {signed: true});
+            //res.cookie('user', 'admin', {signed: true});
+            req.session.user = 'admin';
             next();
         }else{
             let err = new Error(`You are not authenticated!`);
@@ -72,7 +86,7 @@ let auth = (req, res, next) => {
             return next(err);
         }
     }else {
-        if(req.signedCookies.user === 'admin'){
+        if(req.session.user === 'admin'){
             next();
         }else{
             let err = new Error(`You are not authenticated!`);
