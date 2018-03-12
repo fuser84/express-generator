@@ -2,6 +2,8 @@ const express = require('express');
 const path = require('path');
 const favicon = require('serve-favicon');
 const logger = require('morgan');
+
+
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 
@@ -38,31 +40,45 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser('12345-67890-09876-54321'));
 
+//basic authentication
 let auth = (req, res, next) => {
-    console.log(req.headers);
+    console.log(req.signedCookies);
 
-    let authHeader = req.headers.authorization;
-    if(!authHeader){
-        let err = new Error(`You are not authenticated!`);
-        res.setHeader('WWW-Authenticate', 'Basic');
-        err.status = 401;
-        return next(err);
-    }
+    //if user is not authorized
+    if(!req.signedCookies.user){
+        let authHeader = req.headers.authorization;
+        if(!authHeader){
+            let err = new Error(`You are not authenticated!`);
+            res.setHeader('WWW-Authenticate', 'Basic');
+            err.status = 401;
+            return next(err);
+        }
 
-    //extract username and password and encode it
-    let auth = new Buffer(authHeader.split(' ')[1], 'base64').toString().split(':');
-    let username = auth[0];
-    let password = auth[1];
+        //extract username and password and encode it
+        let auth = new Buffer(authHeader.split(' ')[1], 'base64').toString().split(':');
+        let username = auth[0];
+        let password = auth[1];
 
-    if(username === 'admin' && password === 'password'){
-        next();
-    }else{
-        let err = new Error(`You are not authenticated!`);
-        res.setHeader('WWW-Authenticate', 'Basic');
-        err.status = 401;
-        return next(err);
+        if(username === 'admin' && password === 'password'){
+            //user=> name, admin ==> value as a result client will have cookie on it's side
+            res.cookie('user', 'admin', {signed: true});
+            next();
+        }else{
+            let err = new Error(`You are not authenticated!`);
+            res.setHeader('WWW-Authenticate', 'Basic');
+            err.status = 401;
+            return next(err);
+        }
+    }else {
+        if(req.signedCookies.user === 'admin'){
+            next();
+        }else{
+            let err = new Error(`You are not authenticated!`);
+            err.status = 401;
+            return next(err);
+        }
     }
 
 };
