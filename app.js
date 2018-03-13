@@ -43,7 +43,7 @@ app.set('view engine', 'jade');
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({extended: false}));
 //app.use(cookieParser('12345-67890-09876-54321'));
 
 //use session
@@ -55,42 +55,24 @@ app.use(session({
     store: new FileStore()
 }));
 
-//basic authentication
+app.use('/', index);
+app.use('/users', users);
+
+//session authentication
 let auth = (req, res, next) => {
     console.log(req.session);
 
     //if user is not authorized
-    if(!req.session.user){
-        let authHeader = req.headers.authorization;
-        if(!authHeader){
-            let err = new Error(`You are not authenticated!`);
-            res.setHeader('WWW-Authenticate', 'Basic');
-            err.status = 401;
-            return next(err);
-        }
-
-        //extract username and password and encode it
-        let auth = new Buffer(authHeader.split(' ')[1], 'base64').toString().split(':');
-        let username = auth[0];
-        let password = auth[1];
-
-        if(username === 'admin' && password === 'password'){
-            //user=> name, admin ==> value as a result client will have cookie on it's side
-            //res.cookie('user', 'admin', {signed: true});
-            req.session.user = 'admin';
+    if (!req.session.user) {
+        let err = new Error(`You are not authenticated!`);
+        err.status = 403;
+        return next(err);
+    } else {
+        if (req.session.user === 'authenticated') {
             next();
-        }else{
+        } else {
             let err = new Error(`You are not authenticated!`);
-            res.setHeader('WWW-Authenticate', 'Basic');
-            err.status = 401;
-            return next(err);
-        }
-    }else {
-        if(req.session.user === 'admin'){
-            next();
-        }else{
-            let err = new Error(`You are not authenticated!`);
-            err.status = 401;
+            err.status = 403;
             return next(err);
         }
     }
@@ -99,31 +81,29 @@ let auth = (req, res, next) => {
 
 app.use(auth);
 
-
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', index);
-app.use('/users', users);
+
 app.use('/dishes', dishRouter);
 app.use('/promotions', promoRouter);
 app.use('/leaders', leaderRouter);
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  const err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+app.use(function (req, res, next) {
+    const err = new Error('Not Found');
+    err.status = 404;
+    next(err);
 });
 
 // error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+app.use(function (err, req, res, next) {
+    // set locals, only providing error in development
+    res.locals.message = err.message;
+    res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+    // render the error page
+    res.status(err.status || 500);
+    res.render('error');
 });
 
 module.exports = app;
