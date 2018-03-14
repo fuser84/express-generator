@@ -13,6 +13,7 @@ const FileStore = require('session-file-store')(session);
 
 const passport = require('passport');
 const authenticate = require('./authenticate');
+const config = require('./config');
 
 const index = require('./routes/index');
 const users = require('./routes/users');
@@ -24,7 +25,7 @@ const mongoose = require('mongoose');
 mongoose.Promise = require('bluebird');
 
 const Dishes = require('./models/dishes');
-const url = 'mongodb://localhost:27017/conFusion';
+const url = config.mongoUrl;
 const connect = mongoose.connect(url);
 
 //connect mongoose to DB
@@ -49,36 +50,15 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 //app.use(cookieParser('12345-67890-09876-54321'));
 
-//use session
-app.use(session({
-    name: 'session-id',
-    secret: '12345-67890-09876-54321',
-    saveUninitialized: false,
-    resave: false,
-    store: new FileStore()
-}));
 
 app.use(passport.initialize());
-app.use(passport.session());
+
 
 
 app.use('/', index);
 app.use('/users', users);
 
-//session authentication
-let auth = (req, res, next) => {
-    //if user is not authorized
-    //req.user will be loaded automatically by passport middleware automatically
-    if (!req.user) {
-        let err = new Error(`You are not authenticated!`);
-        err.status = 403;
-        return next(err);
-    } else {
-        next();
-    }
-};
 
-app.use(auth);
 
 app.use(express.static(path.join(__dirname, 'public')));
 

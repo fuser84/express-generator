@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const User = require('../models/user');
 const passport = require('passport');
+const authenticate = require('../authenticate');
 
 const router = express.Router();
 router.use(bodyParser.json());
@@ -35,9 +36,11 @@ router.post('/signup', (req, res, next) => {
 //if all is ok callback will be triggered
 
 router.post('/login', passport.authenticate('local'), (req, res) => {
+
+    let token = authenticate.getToken({_id: req.user._id});//req.user is get after authenticate() above
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
-    res.json({success: true, status: 'Your are successfully logged in!'});
+    res.json({success: true, token: token, status: 'Your are successfully logged in!'});
 });
 
 //in order not to apply any info we use get
