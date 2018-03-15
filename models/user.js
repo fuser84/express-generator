@@ -4,6 +4,14 @@ const passportLocalMongoose = require('passport-local-mongoose');//username and 
 // will be added automatically so they are deleted from User schema
 
 const User = new Schema({
+    firstname: {
+        type: String,
+        default: ''
+    },
+    lastname: {
+        type: String,
+        default: ''
+    },
     admin: {
         type: Boolean,
         default: false
