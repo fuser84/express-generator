@@ -187,26 +187,32 @@ dishRouter.route('/:dishId/comments/:commentId')
     .put(authenticate.verifyUser, (req, res, next) => {
         Dishes.findById(req.params.dishId)
             .then((dish) => {
-                if (dish != null && dish.comments.id(req.params.commentId) != null) {
-                    if (req.body.rating) {
-                        dish.comments.id(req.params.commentId).rating = req.body.rating;
+                if (req.user.id.localeCompare((dish.comments.id(req.params.commentId).author)) === 0) {
+                    if (dish != null && dish.comments.id(req.params.commentId) != null) {
+                        if (req.body.rating) {
+                            dish.comments.id(req.params.commentId).rating = req.body.rating;
+                        }
+                        if (req.body.comment) {
+                            dish.comments.id(req.params.commentId).comment = req.body.comment;
+                        }
+                        dish.save()
+                            .then((dish) => {
+                                res.statusCode = 200;
+                                res.setHeader('Content-Type', 'application/json');
+                                res.json(dish);
+                            }, (err) => next(err))
+                    } else if (dish == null) {
+                        let err = new Error(`Dish ${req.params.dishId} not found`);
+                        err.status = 404;
+                        return next(err);
+                    } else {
+                        let err = new Error(`Comment ${req.params.commentId} not found`);
+                        err.status = 404;
+                        return next(err);
                     }
-                    if (req.body.comment) {
-                        dish.comments.id(req.params.commentId).comment = req.body.comment;
-                    }
-                    dish.save()
-                        .then((dish) => {
-                            res.statusCode = 200;
-                            res.setHeader('Content-Type', 'application/json');
-                            res.json(dish);
-                        }, (err) => next(err))
-                } else if (dish == null) {
-                    let err = new Error(`Dish ${req.params.dishId} not found`);
-                    err.status = 404;
-                    return next(err);
                 } else {
-                    let err = new Error(`Comment ${req.params.commentId} not found`);
-                    err.status = 404;
+                    let err = new Error(`Your are not authorized to preform this operation!`);
+                    err.status = 403;
                     return next(err);
                 }
             }, (err) => next(err))
@@ -216,21 +222,27 @@ dishRouter.route('/:dishId/comments/:commentId')
     .delete(authenticate.verifyUser, (req, res, next) => {
         Dishes.findById(req.params.dishId)
             .then((dish) => {
-                if (dish != null && dish.comments.id(req.params.commentId) != null) {
-                    dish.comments.id(req.params.commentId).remove();
-                    dish.save()
-                        .then((dish) => {
-                            res.statusCode = 200;
-                            res.setHeader('Content-Type', 'application/json');
-                            res.json(dish);
-                        }, (err) => next(err));
-                } else if (dish == null) {
-                    let err = new Error(`Dish ${req.params.dishId} not found`);
-                    err.status = 404;
-                    return next(err);
-                } else {
-                    let err = new Error(`Comment ${req.params.commentId} not found`);
-                    err.status = 404;
+                if (req.user.id.localeCompare((dish.comments.id(req.params.commentId).author)) === 0) {
+                    if (dish != null && dish.comments.id(req.params.commentId) != null) {
+                        dish.comments.id(req.params.commentId).remove();
+                        dish.save()
+                            .then((dish) => {
+                                res.statusCode = 200;
+                                res.setHeader('Content-Type', 'application/json');
+                                res.json(dish);
+                            }, (err) => next(err));
+                    } else if (dish == null) {
+                        let err = new Error(`Dish ${req.params.dishId} not found`);
+                        err.status = 404;
+                        return next(err);
+                    } else {
+                        let err = new Error(`Comment ${req.params.commentId} not found`);
+                        err.status = 404;
+                        return next(err);
+                    }
+                }else {
+                    let err = new Error(`Your are not authorized to preform this operation!`);
+                    err.status = 403;
                     return next(err);
                 }
             }, (err) => next(err))
