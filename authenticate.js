@@ -44,3 +44,15 @@ exports.jwtPassport = passport.use(new JwtStrategy(opts,
 //takes token to verify the user
 exports.verifyUser = passport.authenticate('jwt', {session: false});//without sessions
 
+exports.verifyAdmin = (req, res, next) => {
+    if (req.user.admin) {
+        console.log(`verifyAdmin is true`);
+        next();
+    }else {
+        let err = new Error(`Your are not authorized to preform this operation!`);
+        err.status = 403;
+        return next(err);
+    }
+
+};
+
