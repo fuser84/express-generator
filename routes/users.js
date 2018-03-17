@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const User = require('../models/user');
 const passport = require('passport');
 const authenticate = require('../authenticate');
+const cors = require('./cors');
 
 const router = express.Router();
 router.use(bodyParser.json());
@@ -12,7 +13,7 @@ router.use(bodyParser.json());
 //   res.send('respond with a resource');
 // });
 
-router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) =>  {
+router.get('/', cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) =>  {
     User.find({})
         .then((users) => {
             res.statusCode = 200;
@@ -22,7 +23,7 @@ router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, ne
             .catch((err) => next(err));
 });
 
-router.post('/signup', (req, res, next) => {
+router.post('/signup', cors.corsWithOptions, (req, res, next) => {
     //register is the method that is provided by passport-local-mongoose
    User.register(new User({username: req.body.username}),
        req.body.password, (err, user)  => {
@@ -59,7 +60,7 @@ router.post('/signup', (req, res, next) => {
 // send reply about failure to the client
 //if all is ok callback will be triggered
 
-router.post('/login', passport.authenticate('local'), (req, res) => {
+router.post('/login', cors.corsWithOptions, passport.authenticate('local'), (req, res) => {
 
     let token = authenticate.getToken({_id: req.user._id});//req.user is get after authenticate() above
     res.statusCode = 200;
@@ -68,7 +69,7 @@ router.post('/login', passport.authenticate('local'), (req, res) => {
 });
 
 //in order not to apply any info we use get
-router.get('/logout', (req, res) => {
+router.get('/logout', cors.corsWithOptions, (req, res) => {
    if(req.session) {
        req.session.destroy();//remove session
        res.clearCookie('session-id');
