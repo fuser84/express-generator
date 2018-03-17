@@ -38,6 +38,16 @@ connect.then(() => {
 
 const app = express();
 
+//redirect to the secure port
+app.all('*', (req, res, next) => {
+   if(req.secure){
+    return next();
+   }else {
+       //307 - return status code: user-agent must not change request method
+       res.redirect(307, `https://${req.hostname}:${app.get('secPort')}${req.url}`);
+   }
+});
+
 // view engine setup
 
 app.set('views', path.join(__dirname, 'views'));
