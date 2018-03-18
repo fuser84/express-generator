@@ -12,6 +12,8 @@ const User = new Schema({
         type: String,
         default: ''
     },
+    //store facebook id of the user that passes the access token
+    facebookId: String,
     admin: {
         type: Boolean,
         default: false
