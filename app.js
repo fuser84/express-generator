@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const favicon = require('serve-favicon');
 const logger = require('morgan');
-
+const cors = require('cors');
 
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
@@ -74,6 +74,8 @@ app.use('/users', users);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+//fix ==> to allow favorites for the client
+app.use(cors({origin: 'http://localhost:4200'}));
 
 app.use('/dishes', dishRouter);
 app.use('/promotions', promoRouter);

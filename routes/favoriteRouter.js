@@ -17,7 +17,7 @@ favoriteRouter.route('/')
         Favorites.findOne({user: req.user._id})
             .populate('user dishes')
             .then((favorites) => {
-                 // console.log(`Here is the favorites ==> ${favorites}`);
+                  console.log(`Here is the favorites ==> ${favorites}`);
                 if (favorites !== null) {
                     let user_id_string = favorites.user._id;
                     if (req.user.id.localeCompare(user_id_string) === 0) {
@@ -176,12 +176,21 @@ favoriteRouter.route('/:favoriteId')
                         res.statusCode = 404;
                         res.setHeader('Content-Type', 'application/json');
                         //res.json(favorites);
-                       return res.json(`There is no dish with such id!!!`);
+                        return res.json(`There is no dish with such id!!!`);
                     }
-                    favorites.dishes = dishes.filter((item) => {
-                        if(item.toString().localeCompare(dish_to_delete) === -1)  return item;
+                    dishes.forEach((item) => {
+                       console.log(`item ==> `, item);
                     });
+                    //should work  but is not working with proposed client version
+                    // favorites.dishes = dishes.filter((item) => {
+                    //     if(item.toString().localeCompare(dish_to_delete) === -1)  return item;
+                    // });
+                    if(dishes.indexOf(dish_to_delete) > -1 ){
+                        let index = dishes.indexOf(dish_to_delete);
+                        favorites.dishes.splice(index, 1);
+                    }
                     console.log(`favorite.dishes ==> `, favorites.dishes);
+                    console.log(`favorites.dishes.length ==> `, favorites.dishes.length);
                     if(favorites.dishes.length === 0){
                         return Favorites.remove({user: req.user._id})
                             .then((resp) => {
@@ -192,14 +201,10 @@ favoriteRouter.route('/:favoriteId')
                             .catch((err) => next(err));
                     }
                     favorites.save()
-                        .then((favorite) => {
-                            Favorites.findById(favorite._id)
-                                .populate('user dishes')
-                                .then((favorite) => {
-                                    res.statusCode = 200;
-                                    res.setHeader('Content-Type', 'application/json');
-                                    res.json(favorite);
-                                });
+                        .then((favorites) => {
+                            res.statusCode = 200;
+                            res.setHeader('Content-Type', 'application/json');
+                            res.json(favorites);
                         }, (err) => next(err))
                         .catch((err) => next(err));
                 }else {
